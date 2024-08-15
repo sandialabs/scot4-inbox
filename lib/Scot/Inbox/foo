@@ -1,3 +1,0 @@
-my $str = "Jarocki\, John Charles jcjaroc@sandia.gov, foobar, boombaz";
-
-print join("\n", split(',',$str));
