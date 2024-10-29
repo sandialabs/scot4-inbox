@@ -8,3 +8,4 @@ Creates a container to run the SCOT4 inbox processor.  The processor will read I
 This is a convenient way to input data from detection systems, threat intel feeds, and analysts directly into SCOT.
 
 For more information and instructions, consult the main SCOT4 documentaton Repository.
+  https://sandialabs.github.io/scot4-docs/index.html

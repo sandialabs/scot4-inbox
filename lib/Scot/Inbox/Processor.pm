@@ -335,11 +335,27 @@ sub create_alertgroup ($self, $json) {
                             {filter=>\&Dumper, value=>$response});
                     };
         $self->log->debug("response => ",{filter=>\&Dumper, value=>$rhash});
+
+        $self->upsert_signature($json) if (defined $self->config->{addsplunksigs});
+
         return 1;
     }
     $self->log->error("undefined response from ScotApi!");
 
     return;
+}
+
+sub upsert_signature ($self, $json) {
+    # For a certain disconnected network, there is no dag to pull signatures into SCOT
+    # but the email includes the signature, so "upsert" a signature
+    # XXX
+    # query api to see if signature matches
+    if ($self->scotapi->signature_exists($json->{search})) {
+        $self->log->debug("Signature exists. moving on...");
+        return;
+    }
+
+    $self->scotapi->create_signature($json->{search});
 }
 
 

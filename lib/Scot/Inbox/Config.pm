@@ -106,6 +106,7 @@ log4perl.appender.InboxLog.layout.ConversionPattern = %d %7p [%P] %15F{1}: %4L %
         scot_queue      => $ENV{S4INBOX_SCOT_INPUT_QUEUE},
         class           => $ENV{S4INBOX_MAIL_CLIENT_CLASS},
         mboxconfig      => $mboxconf,
+        addsplunksigs   => $ENV{S4INBOX_ADD_SPLUNK_SIGS}, # for disconnected nets
     };
     return $config;
 }

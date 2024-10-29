@@ -8,8 +8,8 @@ RUN mkdir -p /opt/scot4-inbox && mkdir -p /var/log/scot
 COPY . /opt/scot4-inbox
 
 # create user/group for scotinbox
-RUN groupadd scotinbox && \
-    useradd -c "Scot Inbox User" -g "scotinbox" -d /opt/scot4-inbox -M -s /bin/bash scotinbox && \
+RUN groupadd -g 5555 scotinbox && \
+    useradd -c "Scot Inbox User" -g "scotinbox" -u 5555 -d /opt/scot4-inbox -M -s /bin/bash scotinbox && \
     chown -R scotinbox:scotinbox /opt/scot4-inbox && \
     chown -R scotinbox:scotinbox /var/log/scot
     

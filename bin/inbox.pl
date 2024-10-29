@@ -36,7 +36,6 @@ my $default_note    = <<EOF;
 EOF
 
 GetOptions(
-    'config=s'  => \$configfile,
     'test'      => \$test,
     'secrets=s' => \$secrets,
     'msv'       => \$nomsv,
@@ -47,7 +46,6 @@ Invalid Option!
     
     usage: $0
         [--test]                          overwrites peeking to true
-        [--config=/path/to/inbox.conf]    use this file as the configuration file
         [--secrets=/path/to/secrets.conf] use this file for secret storage
         [--msv]                           do not filter msv data
         [--msvlog=/path/to/log]           where to log msv hits
@@ -60,7 +58,6 @@ if ($nomsv) {
 }
 
 my $opts    = {
-    configfile  => $configfile,
     test        => $test,
     secrets     => $secrets,
     msv         => $msv,
