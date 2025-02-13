@@ -14,12 +14,8 @@ has ids => (
     }
 );
 
-has env => (
-    is  => 'ro', isa => 'Scot::Env', required => 1
-);
-
 has msgraph => (
-    is => 'rw', isa => 'Scot::Email::MSGraph', required => 1
+    is => 'rw', isa => 'Scot::Inbox::Msgraph', required => 1
 );
 
 sub count {

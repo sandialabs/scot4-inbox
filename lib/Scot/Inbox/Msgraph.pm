@@ -1,4 +1,4 @@
-package Scot::Email::MSGraph;
+package Scot::Inbox::Msgraph;
 
 use lib '../../../lib';
 use strict;
@@ -30,7 +30,7 @@ has permitted_senders => sub ($self) { $self->config->{permitted_senders} };
 
 sub get_access_token {
     my ($self)  = @_;
-    my $log     = $self->env->log;
+    my $log     = $self->log;
 
     my $url     = join('',
         $self->loginurl,
@@ -59,7 +59,7 @@ sub get_access_token {
 
 sub get_mail {
     my ($self, $start, $end)  = @_;
-    my $log     = $self->env->log;
+    my $log     = $self->log;
     my $filter  = '&$filter=';
 
     if ( $self->bydate ) {
@@ -106,7 +106,6 @@ sub get_mail {
     my $cursor  = Scot::Email::MSGraph::Cursor->new(
         ids     => \@mids,
         msgraph => $self,
-        env     => $self->env,
     );
 }
 
@@ -121,19 +120,19 @@ sub mark_message_read {
     );
     my $update = {isRead => 'TRUE' };
     $auth->{'Content-Type'} = "application/json";
-    $self->env->log->debug("mark_read_url  = ",{filter =>\&Dumper, value => $url});
-    $self->env->log->debug("mark_read_json = ",{filter =>\&Dumper, value => $auth});
+    $self->log->debug("mark_read_url  = ",{filter =>\&Dumper, value => $url});
+    $self->log->debug("mark_read_json = ",{filter =>\&Dumper, value => $auth});
     my $tx      = $self->ua->patch($url => $auth => json => $update);
     my $result  = $tx->result;
 
     if ($result->is_error) {
-        $self->env->log->error("ERROR updating isRead status!");
+        $self->log->error("ERROR updating isRead status!");
         my $json    = $result->json;
-        $self->env->log->error({filter => \&Dumper, value => $json});
+        $self->log->error({filter => \&Dumper, value => $json});
         return;
     }
 
-    $self->env->log->debug("$msgid isRead set to 1");
+    $self->log->debug("$msgid isRead set to 1");
     return;
 }
 
@@ -141,7 +140,7 @@ sub build_message_id_list {
     my $self        = shift;
     my $messages    = shift;
     my @mids        = ();
-    my $log         = $self->env->log;
+    my $log         = $self->log;
 
     MSG:
     foreach my $m (@$messages) {
@@ -167,7 +166,7 @@ sub build_auth_token {
 sub get_message {
     my $self    = shift;
     my $id      = shift;
-    my $log     = $self->env->log;
+    my $log     = $self->log;
     my $url     = join('',
         $self->graphurl,
         '/', $self->useraddress,
@@ -213,13 +212,13 @@ sub get_html_body {
     if ( $body->{contentType} eq "html" ) {
         return $body->{content};
     }
-    $self->env->log->warn("No HTML body found!");
+    $self->log->warn("No HTML body found!");
     return '';
 }
 
 sub get_plain_body {
     my ($self, $url, $auth) = @_;
-    my $log = $self->env->log;
+    my $log = $self->log;
     $log->debug("attempting to get plain body");
     $auth->{Prefer} = 'outlook.body-content-type="text"';
     my $tx  = $self->ua->get($url => $auth);
@@ -230,7 +229,7 @@ sub get_plain_body {
 
 sub get_attachments {
     my ($self, $id)     = @_;
-    my $log             = $self->env->log;
+    my $log             = $self->log;
     my $url = join('',
         $self->graphurl,
         '/messages/',$id,'/attachments');
@@ -270,7 +269,7 @@ sub get_mime {
     $url .= '/$value';  # will retrieve the mime version of the email
     $auth = $self->build_auth_token if (! defined $auth);
 
-    my $log = $self->env->log;
+    my $log = $self->log;
     $log->debug("Getting MIME message with $url");
 
     my $tx      = $self->ua->get($url => $auth);
@@ -341,7 +340,7 @@ sub from_permitted_sender {
     my $self    = shift;
     my $from    = shift;
     my @oksenders   = @{$self->permitted_senders};
-    my $log     = $self->env->log;
+    my $log     = $self->log;
 
     # each permitted sender can be a regex, 
     # a '*' match all wildcard, or and explicit

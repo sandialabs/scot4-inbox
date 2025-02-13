@@ -63,8 +63,8 @@ sub build_config () {
         $mboxconf   = {
             loginurl    => $ENV{S4INBOX_GRAPH_LOGIN_URL},
             graphurl    => $ENV{S4INBOX_GRAPH_GRAPH_URL},
-            scot        => $ENV{S4INBOX_GRAPH_SCOPE},
-            tenet_id    => $ENV{S4INBOX_GRAPH_TENENT_ID},
+            scope       => $ENV{S4INBOX_GRAPH_SCOPE},
+            tenet_id    => $ENV{S4INBOX_GRAPH_TENET_ID},
             client_id   => $ENV{S4INBOX_GRAPH_CLIENT_ID},
             client_secret   => $ENV{S4INBOX_GRAPH_CLIENT_SECRET},
             useraddress   => $ENV{S4INBOX_GRAPH_USERADDRESS},

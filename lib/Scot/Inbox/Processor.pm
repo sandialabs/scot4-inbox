@@ -106,7 +106,7 @@ sub delete ($self) {
         $log->logdie("Failed to create $class, unable to process inbox");
     }
 
-    my $cursor  = $client->get_mail;
+    my $cursor  = $client->get_before_cursor;
     my $count   = $cursor->count;
     my $index   = 0;
     my $target  = $config->{scot_queue};

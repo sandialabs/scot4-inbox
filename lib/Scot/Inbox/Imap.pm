@@ -512,6 +512,10 @@ sub inline_images ($self, $tree, $imgdb) {
     }
 }
 
+sub delete_message ($self, @msgids) {
+    $self->client->delete_message(\@msgids);
+}
+
 
 1;
 
