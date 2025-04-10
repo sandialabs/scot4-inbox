@@ -103,7 +103,7 @@ sub get_mail {
 
     $log->trace("Creating Cursor with ids = ", join(',',@mids));
     
-    my $cursor  = Scot::Email::MSGraph::Cursor->new(
+    my $cursor  = Scot::Email::Msgraph::Cursor->new(
         ids     => \@mids,
         msgraph => $self,
     );
