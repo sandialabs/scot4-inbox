@@ -162,6 +162,29 @@ sub create_dispatch ($self, $json) {
     };
 }
 
+sub create_vulnfeed ($self, $json) {
+    my $entry_text  = delete $json->{entry};
+    my $uri         = $self->config->{uri_root}."/vuln_feed/";
+    my $vulnfeed    = decode_json $self->post($uri, $json);
+    $self->log->debug("post returns: ",{filter =>\&Dumper, value => $vulnfeed});
+
+    if ( defined $vulnfeed and $vulnfeed->{id} > 0 ) {
+        $self->log->debug("creating entry");
+        my $entry  = decode_json $self->create_entry("vuln_feed", $vulnfeed->{id}, $entry_text);
+        $self->log->debug("entry = ",{filter=>\&Dumper, value => $entry});
+        if ( defined $entry and $entry->{id} > 0 ) {
+            return {
+                vuln_feed   => $vulnfeed,
+                entry       => $entry,
+            };
+        }
+    }
+    return {
+        vulnfeed    => undef,
+        entry       => undef,
+    };
+}
+
 sub create_event ($self, $json) {
     my $entry_text  = delete $json->{entry};
     my $uri         = $self->config->{uri_roo}."/entry/";

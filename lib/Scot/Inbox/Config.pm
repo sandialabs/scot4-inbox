@@ -33,7 +33,7 @@ use Mojo::Util qw(decode);
 # S4INBOX_MSV_FILTER_DEFINITIONS... the filename holding the MSV filter definitions
 # S4INBOX_MSV_DBM_FILE          ... the filename of the dbm file for msv deduplication
 # S4INBOX_SCOT_INPUT_QUEUE      ... alertgroup, event, or dispatch
-# S4INBOX_MAIL_CLIENT_CLASS     ... Scot::Inbox::Imap or Scot::Inbox::MSGraph
+# S4INBOX_MAIL_CLIENT_CLASS     ... Scot::Inbox::Imap or Scot::Inbox::Msgraph
 # S4INBOX_TEST_MODE             ... read inbox regardless of "unread" state and do not change read flags
 #
 # SECRETS

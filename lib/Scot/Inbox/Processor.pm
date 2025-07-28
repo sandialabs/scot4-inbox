@@ -74,6 +74,7 @@ sub run ($self) {
     while (my $msg  = $cursor->next) {
         $index++;
         $log->debug("[$target] processing message $index of $count");
+        $log->debug("msg => ", {filter=>\&Dumper, value => $msg});
         if (! defined $msg) {
             $log->warn("[$target] undefined message encountered, skipping");
             next;
@@ -152,19 +153,26 @@ sub process_message ($self, $msg, $target) {
         return 1;
     }
 
+    $self->log->debug("Target is $target");
+
     return $self->process_alert($msg)      if ($target eq 'alertgroup');
     return $self->process_dispatch($msg)   if ($target eq 'dispatch');
+    return $self->process_vulnfeed($msg)   if ($target eq 'vulnfeed' or $target eq "vuln_feed");
     return $self->process_event($msg)      if ($target eq 'event');
 
 }
 
+sub processor_class ($self, $subject) {
+    return "splunk" if $self->looks_like_splunk($subject);
+    return "uba"    if $self->looks_like_uba($subject);
+    return "generic";
+}
+
 sub process_alert ($self, $msg) {
-    # 2 types of alerts, from splunk and generic
     my $subject = $msg->{subject};
-    $self->log->debug("Looking at message $subject");
-    my $json    = ($self->looks_like_splunk($subject)) 
-                        ? $self->process_splunk_alert($msg) 
-                        : $self->process_generic_alert($msg);
+    my $class   = "process_".$self->processor_class($subject)."_alert";
+    $self->log->debug("Looking at message $subject class $class");
+    my $json    = $self->$class($msg);
     $self->filter_msv($json) if $self->msv;
     my $status  = $self->create_alertgroup($json);
     if ( $status > 0 ) {
@@ -182,6 +190,11 @@ sub process_alert ($self, $msg) {
 sub looks_like_splunk ($self, $subject) {
     return 1 if ($subject =~ /splunk alert/i);
     return 1 if ($subject =~ /splunk report/i);
+    return undef;
+}
+
+sub looks_like_uba ($self, $subject) {
+    return 1 if ($subject =~ /Splunk UBA/i);
     return undef;
 }
 
@@ -396,6 +409,40 @@ sub process_splunk_alert ($self, $msg) {
     return wantarray ? %json : \%json;
 }
 
+sub process_uba_alert ($self, $msg) {
+    $self->log->debug("Processing a UBA alert...");
+    my ($html, 
+        $plain, 
+        $tree)      = $self->preparse($msg);
+    # return $alertname, $backlink, \%data;
+    my ($alertname,
+        $backlink,
+        $columns,
+        $data)      = $self->get_uba_report_info($tree);
+    my $alertschema = $self->build_alert_schema($columns);
+    
+    my %json    = (
+        owner       => 'scot-alerts',
+        tlp         => 'unset',
+        view_count  => 0,
+        message_id  => $msg->{message_id},
+        subject     => $msg->{subject},
+        sources     => [qw(email splunk)],
+        tags        => [],
+        alerts      => { data => $data },
+        alert_schema => $alertschema,
+        back_refs   => $backlink,
+        # additons to discuss with greg
+        # (will delete in filter_schema after writing MSV log)
+        columns   => $columns, # to get column order from splunk
+        links     => [],
+        search      => $backlink,
+    );
+    $self->log->trace("built json ", {filter => \&Dumper, value => \%json});
+
+    return wantarray ? %json : \%json;
+}
+
 sub build_alerts ($self, $alerts) {
     my @new = map { { data => $_ } } @$alerts;
     return \@new;
@@ -443,6 +490,57 @@ sub get_splunk_report_info ($self, $tree) {
     $self->log->debug("search    = $search");
     $self->log->debug("tags      = ", {filter => \&Dumper, value => \@tags});
     return $alertname, $search, \@tags;
+}
+
+sub get_uba_report_info ($self, $tree) {
+    my $alertname   = "UBA parse error";
+    my @tags        = (qw(parse_error));
+    my $backlink    = 'parse_error';
+    my %data        = ();
+    my @columns     = ();
+
+    my $title_element   = $tree->look_down('_tag', 'title');
+    if ($title_element) {
+        $alertname = $title_element->as_text;
+    }
+
+    my $link_element    = ($tree->look_down('_tag', 'a'))[0];
+    if ($link_element) {
+        $backlink   = $link_element->attr('href');
+    }
+
+    my $table       = ($tree->look_down('_tag', 'table'))[0];
+    my @rows        = $table->look_down('_tag', 'tr');
+    foreach my $row (@rows) {
+        my ($col1, $col2) = $row->look_down('_tag', 'td');
+        my $colname = $col1->as_text;
+        push @columns, $colname;
+        my $colval  = $col2->as_text;
+        $data{$colname} = $colval;
+    }
+
+    # note: this is specified by Kyle Gonzales
+    # Looking at the sample, however some of these could be missing
+
+    my $users_element   = ($tree->look_down('_tag','ul'))[0];
+    my @li_users        = $users_element->look_down('_tag','li');
+    foreach my $li (@li_users) {
+        push @{$data{users}}, $li->as_text;
+    }
+
+    my $devices_element = ($tree->look_down('_tag','ul'))[1];
+    my @li_devices      = $devices_element->look_down('_tag','li');
+    foreach my $li (@li_devices) {
+        push @{$data{devices}}, $li->as_text;
+    }
+
+    my $domains_element = ($tree->look_down('_tag', 'ul'))[2];
+    my @li_domains      = $domains_element->look_down('_tag','li');
+    foreach my $li (@li_domains) {
+        push @{$data{domains}}, $li->as_text;
+    }
+
+    return $alertname, $backlink, \%data;
 }
 
 sub get_alert_results ($self, $tree, $alertname, $search) {
@@ -591,6 +689,35 @@ sub process_dispatch ($self, $msg) {
 
     return 1;
 }
+
+sub process_vulnfeed ($self, $msg) {
+    $self->log->debug("Process a vulnfeed...");
+    my ($html, $plain, $tree) = $self->preparse($msg);
+    my $tlp                   = $self->find_tlp($plain);
+    my $entry                 = $self->build_entry($tree, $tlp);
+
+    my %json    = (
+        vuln_feed    => {
+            subject     => $msg->{subject},
+            message_id  => $msg->{message_id},
+            owner       => 'scot-vulnfeed',
+            tags        => $self->build_tags($msg),
+            sources     => $self->build_sources($msg),
+            tlp         => $tlp,
+        },
+        entry   => $entry,
+    );
+    $self->log->debug("vulnfeed item = ", {filter=>\&Dumper, value=> \%json});
+    my $resp = $self->scotapi->create_vulnfeed(\%json);
+
+    if (!defined $resp->{vuln_feed} || !defined $resp->{entry}) {
+        $self->log->error("Error creating either dispatch or entry!");
+        $self->log->error("resp = ",{filter =>\&Dumper, value => $resp});
+        return;
+    }
+    return 1;
+}
+
 
 sub process_event ($self, $msg) {
     $self->log->debug("Processing a event...");
@@ -759,7 +886,4 @@ sub find_tlp ($self, $text) {
 }
 
 1;
-
-
-
 
