@@ -60,7 +60,7 @@ sub connect ($self) {
         $self->log->debug("Imap connected...");
     }
     else {
-        $self->log->logdie("Failed to create Mail::IMAPClient: $@");
+        $self->log->logdie("Failed to create Mail::IMAPClient: ".$client->LastError." $@");
     }
 
     if ( $self->config->{peek} or $self->config->{test_mode} ) {
