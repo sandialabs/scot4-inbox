@@ -43,6 +43,11 @@ has 'msvfilters'    => sub ($self) {
 };
 has 'msv_msg_id_dbm' => '/opt/scot4-inbox/var/msv.dbm';
 
+has 'delete_before' => sub ($self) {
+    # epoch seconds of date 180 days ago
+    return time() - (180 * 24 * 60 * 60);
+};
+
 sub run ($self) {
     my $config  = $self->config;
     my $log     = $self->log;
@@ -98,7 +103,7 @@ sub delete ($self) {
     my $log     = $self->log;
 
     $log->debug("Starting Delete Job...");
-    my $before_epoch    = $config->delete_before;
+    my $before_epoch    = $self->delete_before;
     $log->debug("   deleting email dated before $before_epoch");
 
     my $class   = $self->config->{class};

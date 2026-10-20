@@ -4,11 +4,11 @@ use Mail::IMAPClient;
 
 my $c = Mail::IMAPClient->new(
     'Server',
-    'mail.sandia.gov',
+    'mail.example.com',
     'Port',
     993,
     'User',
-    'scot-alerts',
+    'scot-alerts-account',
     'Password',
     'changeme',
     'Ssl',
@@ -22,5 +22,5 @@ my $c = Mail::IMAPClient->new(
     undef);
 
 
-my $s = $c->message_string('4638781');
+my $s = $c->message_string('1');
 print "$s\n";

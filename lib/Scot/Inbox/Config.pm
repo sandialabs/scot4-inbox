@@ -29,7 +29,7 @@ use Mojo::Util qw(decode);
 # S4INBOX_LOG_LEVEL          ... TRACE, DEBUG, INFO, WARN, ERROR
 # S4INBOX_LOG_FILE           ... file to append logs to
 # S4INBOX_SCOT_API_INSECURE_SSL ... 0 disables SSL verification, 1 to require it.
-# S4INBOX_SCOT_API_URI_ROOT     ... the prefix for api uri, https://s4.sandia.gov/api/v1
+# S4INBOX_SCOT_API_URI_ROOT     ... the prefix for api uri, https://scot.example.com/api/v1
 # S4INBOX_MSV_FILTER_DEFINITIONS... the filename holding the MSV filter definitions
 # S4INBOX_MSV_DBM_FILE          ... the filename of the dbm file for msv deduplication
 # S4INBOX_SCOT_INPUT_QUEUE      ... alertgroup, event, or dispatch

@@ -27,6 +27,7 @@ my $secrets     = "../etc/secrets.conf";
 my $msv         = 1;
 my $nomsv       = 0;
 my $msvlog      = "/opt/scot4-inbox/var/log/msv.log";
+my $before      = time() - (180 * 24 * 60 * 60);
 
 my $default_note    = <<EOF;
         note: default config  is $configfile
@@ -41,6 +42,7 @@ GetOptions(
     'secrets=s' => \$secrets,
     'msv'       => \$nomsv,
     'msvlog'    => \$msvlog,
+    'before=s'  => \$before,
 ) or die <<EOF;
 
 Invalid Option!
@@ -51,6 +53,7 @@ Invalid Option!
         [--secrets=/path/to/secrets.conf] use this file for secret storage
         [--msv]                           do not filter msv data
         [--msvlog=/path/to/log]           where to log msv hits
+        [--before=1762975371]             delete messages before this unix epoch 
 
         $default_note
 EOF
@@ -60,12 +63,12 @@ if ($nomsv) {
 }
 
 my $opts    = {
-    configfile  => $configfile,
-    test        => $test,
-    secrets     => $secrets,
-    msv         => $msv,
-    msvlog      => $msvlog,
-    delete_before   => time() - (2 * 365 * 24 * 3600)
+    configfile      => $configfile,
+    test            => $test,
+    secrets         => $secrets,
+    msv             => $msv,
+    msvlog          => $msvlog,
+    delete_before   => $before,
 };
 
 Scot::Inbox::Processor->new($opts)->delete();
